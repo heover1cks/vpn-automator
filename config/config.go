@@ -8,9 +8,30 @@ import (
 	"strings"
 )
 
+const (
+	DEFAULT_BIGIP_LOCATION_MAC = "/Applications/BIG-IP Edge Client.app"
+)
+
+type ClientEnum int
+
+const (
+	WireGuard ClientEnum = iota
+	BigIPEdge
+)
+
+func (s ClientEnum) String() string {
+	switch s {
+	case WireGuard:
+		return "wg"
+	case BigIPEdge:
+		return "bigip"
+	}
+	return "unknown"
+}
+
 type Config struct {
-	Accounts   []*AccountConfig   `yaml:"accounts"`
-	VPNClients []*VPNClientConfig `yaml:"vpn_clients"`
+	Accounts   []*DefaultAccountConfig `yaml:"accounts"`
+	VPNClients []*VPNClientConfig      `yaml:"vpn_clients"`
 }
 
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -21,15 +42,21 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-type AccountConfig struct {
+type DefaultAccountConfig struct {
+	// Default Config
 	Alias  string `yaml:"alias"`
-	ID     string `yaml:"id"`
-	PW     string `yaml:"pw"`
 	Client string `yaml:"client"`
+
+	// Big-IP Edge Client Config
+	ID string `yaml:"id,omitempty"`
+	PW string `yaml:"pw,omitempty"`
+
+	// WireGuard Config
+	ServiceName string `yaml:"service_name,omitempty"`
 }
 
-func (a *AccountConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type plain AccountConfig
+func (a *DefaultAccountConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain DefaultAccountConfig
 	if err := unmarshal((*plain)(a)); err != nil {
 		return err
 	}
@@ -38,7 +65,7 @@ func (a *AccountConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 type VPNClientConfig struct {
 	Alias    string `yaml:"alias"`
-	Location string `yaml:"location"`
+	Location string `yaml:"location,omitempty"`
 }
 
 func (v *VPNClientConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -74,11 +101,17 @@ func loadConfig(s string) (*Config, error) {
 func (c *Config) SetDirectory(dir string) {}
 
 type CurrentConfig struct {
-	Alias    string
+	// Default Config
+	Alias  string
+	Client string
+
+	// Big-IP Edge Config
 	ID       string
 	PW       string
-	Client   string
 	Location string
+
+	// WireGuard Config
+	ServiceName string
 }
 
 func (c *Config) FindCurrentConfig(alias string) (*CurrentConfig, error) {
@@ -90,14 +123,32 @@ func (c *Config) FindCurrentConfig(alias string) (*CurrentConfig, error) {
 		if acc.Alias == alias {
 			cc = CurrentConfig{
 				Alias:  acc.Alias,
-				ID:     acc.ID,
-				PW:     acc.PW,
 				Client: acc.Client,
 			}
+			err := cc.ParseClientName()
+			if err != nil {
+				return &cc, errors.New("no matching VPN client")
+			}
+			switch cc.Client {
+			case "bigip":
+				if acc.ID != "" && acc.PW != "" {
+					cc.ID = acc.ID
+					cc.PW = acc.PW
+				} else {
+					return &cc, errors.New("ID/PW for SSL VPN required")
+				}
+				cc.ID = acc.ID
+				cc.PW = acc.PW
+			case "wg":
+				if acc.ServiceName != "" {
+					cc.ServiceName = acc.ServiceName
+				} else {
+					return &cc, errors.New("wireguard service name required")
+				}
+			}
+			break
 		}
 	}
-	cc.ParseClientName()
-
 	if cc == (CurrentConfig{}) {
 		return &cc, errors.New("no matching alias")
 	}
@@ -106,8 +157,9 @@ func (c *Config) FindCurrentConfig(alias string) (*CurrentConfig, error) {
 			cc.Location = vpn.Location
 		}
 	}
-	if cc.Location == "" {
-		return &cc, errors.New("no matching VPN client")
+	if cc.Location == "" && cc.Client == "bigip" {
+		cc.Location = DEFAULT_BIGIP_LOCATION_MAC
+		return &cc, errors.Wrapf(errors.New("location not specified"), "default is: %s", DEFAULT_BIGIP_LOCATION_MAC)
 	}
 	return &cc, nil
 }

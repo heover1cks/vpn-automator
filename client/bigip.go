@@ -15,7 +15,11 @@ type BigIPEdgeClient struct {
 	Conf    config.CurrentConfig
 }
 
-func (b *BigIPEdgeClient) BigIPEdgeClientSequence() {
+func (b *BigIPEdgeClient) DisconnectBigIPEdgeClientSequence() {
+	b.killBigIPEdgeClient()
+}
+
+func (b *BigIPEdgeClient) ConnectBigIPEdgeClientSequence() {
 	b.openBigIPEdgeClient()
 	b.killBigIPEdgeClient()
 	b.openBigIPEdgeClient()

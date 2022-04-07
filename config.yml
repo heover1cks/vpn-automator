@@ -1,8 +1,11 @@
 accounts:
-  - alias: default
+  - alias: default.bigip
     id: __VPN_ID__
     pw: __VPN_PW__
     client: bigip
+  - alias: default.wg
+    client: wg
+    service_name: __VPN_SERVICE_NAME__
 vpn_clients:
   - alias: bigip
     location: /Applications/BIG-IP Edge Client.app

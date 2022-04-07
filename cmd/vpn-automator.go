@@ -22,14 +22,17 @@ func main() {
 	if opts.Quiet {
 		log.SetLevel(log.FatalLevel)
 	}
+	if opts.LogFormat != "default" {
+		log.SetFormatter(&log.JSONFormatter{})
+	}
 	cfg, err := config.LoadConfigFile(opts.ConfigFilePath)
 	if err != nil {
 		log.Fatal("fail to load config: ", err)
 	}
-	connectVPN(*cfg, opts.Alias)
+	connectVPN(*cfg, opts.Alias, opts.Disconnect)
 }
 
-func connectVPN(cfg config.Config, alias string) {
+func connectVPN(cfg config.Config, alias string, disconnect bool) {
 	cur, err := cfg.FindCurrentConfig(alias)
 	if err != nil {
 		log.Fatal("fail to find matching config: ", err)
@@ -39,12 +42,25 @@ func connectVPN(cfg config.Config, alias string) {
 		var bc = &client.BigIPEdgeClient{
 			Conf: *cur,
 		}
-		bc.BigIPEdgeClientSequence()
+		if !disconnect {
+			bc.ConnectBigIPEdgeClientSequence()
+		} else {
+			bc.DisconnectBigIPEdgeClientSequence()
+		}
+	case "wg":
+		var wg = &client.WireGuardClient{
+			Conf: *cur,
+		}
+		if !disconnect {
+			wg.ConnectWireGuardClientSequence()
+		} else {
+			wg.DisconnectWireGuardClientSequence()
+		}
 	}
 }
 
 func init() {
-	//log.SetFormatter(&log.JSONFormatter{})
+	log.SetFormatter(&log.TextFormatter{})
 	log.SetOutput(os.Stdout)
 	log.SetLevel(log.InfoLevel)
 	log.SetReportCaller(true)
