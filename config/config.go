@@ -53,6 +53,8 @@ type DefaultAccountConfig struct {
 
 	// WireGuard Config
 	ServiceName string `yaml:"service_name,omitempty"`
+
+	Status string
 }
 
 func (a *DefaultAccountConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -61,6 +63,14 @@ func (a *DefaultAccountConfig) UnmarshalYAML(unmarshal func(interface{}) error) 
 		return err
 	}
 	return nil
+}
+
+func (c *Config) RetrieveAccountAliases() map[string]string {
+	ret := map[string]string{}
+	for _, acc := range c.Accounts {
+		ret[acc.Alias] = acc.Status
+	}
+	return ret
 }
 
 type VPNClientConfig struct {
@@ -120,7 +130,7 @@ func (c *Config) FindCurrentConfig(alias string) (*CurrentConfig, error) {
 		return &cc, errors.New("VPN Alias required")
 	}
 	for _, acc := range c.Accounts {
-		if acc.Alias == alias {
+		if acc.Alias == alias || acc.ID == alias {
 			cc = CurrentConfig{
 				Alias:  acc.Alias,
 				Client: acc.Client,

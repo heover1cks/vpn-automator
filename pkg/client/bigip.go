@@ -38,6 +38,19 @@ func (b *BigIPEdgeClient) openBigIPEdgeClient() {
 	robotgo.Sleep(1)
 }
 
+func isBigIPEdgeClientAlive() bool {
+	pid, err := exec.Command("pgrep", "BIG-IP").Output()
+	if err != nil {
+		log.Fatal("failed to get status: ", err)
+	}
+	if string(pid) == "" {
+		//log.Info("Big-IP Edge Client process not exists")
+		return false
+	} else {
+		return true
+	}
+}
+
 func (b *BigIPEdgeClient) getPID() {
 	pid, err := exec.Command("pgrep", "BIG-IP").Output()
 	if string(pid) == "" {

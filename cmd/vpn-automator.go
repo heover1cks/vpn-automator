@@ -1,9 +1,12 @@
 package main
 
 import (
-	"github.com/heover1cks/vpn-automator/client"
+	"fmt"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/heover1cks/vpn-automator/config"
-	"github.com/heover1cks/vpn-automator/options"
+	"github.com/heover1cks/vpn-automator/pkg/client"
+	"github.com/heover1cks/vpn-automator/pkg/options"
+	"github.com/heover1cks/vpn-automator/pkg/tui"
 	log "github.com/sirupsen/logrus"
 	"os"
 )
@@ -25,36 +28,23 @@ func main() {
 	if opts.LogFormat != "default" {
 		log.SetFormatter(&log.JSONFormatter{})
 	}
-	cfg, err := config.LoadConfigFile(opts.ConfigFilePath)
-	if err != nil {
-		log.Fatal("fail to load config: ", err)
-	}
-	connectVPN(*cfg, opts.Alias, opts.Disconnect)
-}
 
-func connectVPN(cfg config.Config, alias string, disconnect bool) {
-	cur, err := cfg.FindCurrentConfig(alias)
-	if err != nil {
-		log.Fatal("fail to find matching config: ", err)
-	}
-	switch cur.Client {
-	case "bigip":
-		var bc = &client.BigIPEdgeClient{
-			Conf: *cur,
+	if opts.CLI {
+		cfg, err := config.LoadConfigFile(opts.ConfigFilePath)
+		if err != nil {
+			log.Fatal("fail to load config: ", err)
 		}
-		if !disconnect {
-			bc.ConnectBigIPEdgeClientSequence()
-		} else {
-			bc.DisconnectBigIPEdgeClientSequence()
+		client.ConnectVPN(*cfg, opts.Alias, opts.Disconnect)
+
+	} else {
+		cfg, err := config.LoadConfigFile(os.Getenv("VPN_AUTOMATOR_CONFIG_PATH"))
+		if err != nil {
+			log.Fatal("fail to load config: ", err)
 		}
-	case "wg":
-		var wg = &client.WireGuardClient{
-			Conf: *cur,
-		}
-		if !disconnect {
-			wg.ConnectWireGuardClientSequence()
-		} else {
-			wg.DisconnectWireGuardClientSequence()
+		p := tea.NewProgram(tui.InitialModel(*cfg))
+		if err := p.Start(); err != nil {
+			fmt.Printf("Alas, there's been an error: %v", err)
+			os.Exit(1)
 		}
 	}
 }
@@ -63,5 +53,5 @@ func init() {
 	log.SetFormatter(&log.TextFormatter{})
 	log.SetOutput(os.Stdout)
 	log.SetLevel(log.InfoLevel)
-	log.SetReportCaller(true)
+	log.SetReportCaller(os.Getenv("VPN_AUTOMATOR_REPORT_CALLER") == "true")
 }

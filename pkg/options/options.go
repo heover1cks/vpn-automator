@@ -13,7 +13,9 @@ type Options struct {
 	Quiet          bool
 	Disconnect     bool
 	LogFormat      string
-	flags          *pflag.FlagSet
+
+	CLI   bool
+	flags *pflag.FlagSet
 }
 
 func (o *Options) AddFlags() {
@@ -28,6 +30,8 @@ func (o *Options) AddFlags() {
 	o.flags.StringVarP(&o.LogFormat, "format", "f", "default", "Log Format (default: text, available: json)")
 	o.flags.BoolVarP(&o.Quiet, "quiet", "q", false, "Running quietly (default: false, print info logs)")
 	o.flags.BoolVarP(&o.Disconnect, "disconnect", "d", false, "Disconnect (default: false)")
+
+	o.flags.BoolVar(&o.CLI, "cli", false, "Run as CLI Mode (default: false, run as TUI mode)")
 
 }
 

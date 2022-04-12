@@ -29,6 +29,15 @@ func (w *WireGuardClient) DisconnectWireGuardClientSequence() {
 	w.disconnect()
 }
 
+func IsWireguardAlive(service string) bool {
+	println(service)
+	status, err := exec.Command("scutil", "--nc", "status", service).Output()
+	if err != nil {
+		log.Fatal("failed to get wireguard-network status: ", err)
+	}
+	return strings.ToLower(strings.Split(string(status), "\n")[0]) == "connected"
+}
+
 func (w *WireGuardClient) getStatus() {
 	status, err := exec.Command("scutil", "--nc", "status", w.Conf.ServiceName).Output()
 	if err != nil {
@@ -44,6 +53,7 @@ func (w *WireGuardClient) connect() {
 		log.Fatal("failed to start wireguard-network: ", w.Conf.ServiceName, err)
 	}
 	w.getStatus()
+	log.Info("Connected to WireGuard: ", w.Conf.ServiceName)
 }
 
 func (w *WireGuardClient) disconnect() {
@@ -53,4 +63,5 @@ func (w *WireGuardClient) disconnect() {
 		log.Fatal("failed to stop wireguard-network: ", w.Conf.ServiceName, err)
 	}
 	w.getStatus()
+	log.Info("Disconnected to WireGuard: ", w.Conf.ServiceName)
 }
