@@ -47,6 +47,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursor < len(m.vpns)-1 {
 				m.cursor++
 			}
+		case "help", "h":
+			printDescription()
 		case "enter", " ":
 			m.manageConnection()
 			return m, tea.Quit
@@ -78,7 +80,7 @@ func (m Model) View() string {
 		s += fmt.Sprintf("[%s]%s %s\n", statusColorFg(m.vpns[vpn]), colorFg(cursor, "159"), vpn)
 		idx += 1
 	}
-	return s
+	return s //+ printDescription()
 }
 
 func colorFg(val, color string) string {
@@ -100,4 +102,12 @@ func statusColorSelector(status string) string {
 	} else {
 		return "13"
 	}
+}
+
+func printDescription() string {
+	ret := "\n"
+	ret += fmt.Sprintf(" *[%s]: Process is alive, but not sure which network is connected\n", statusColorFg("UNKN"))
+	ret += fmt.Sprintf(" *[%s]: Connected\n", statusColorFg("CONN"))
+	ret += fmt.Sprintf(" *[%s]: Disconnected or process is dead\n", statusColorFg("DISC"))
+	return ret
 }

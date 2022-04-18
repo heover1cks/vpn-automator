@@ -10,6 +10,11 @@ import (
 	"syscall"
 )
 
+var (
+	// TODO: Let config change this
+	KeyStrokeWaitTime = 300
+)
+
 type BigIPEdgeClient struct {
 	process string
 	Conf    config.CurrentConfig
@@ -35,13 +40,15 @@ func (b *BigIPEdgeClient) openBigIPEdgeClient() {
 	if err != nil {
 		log.Fatal("failed to start Big IP Edge Client: ", err)
 	}
-	robotgo.Sleep(1)
+	robotgo.MilliSleep(KeyStrokeWaitTime)
 }
 
 func isBigIPEdgeClientAlive() bool {
 	pid, err := exec.Command("pgrep", "BIG-IP").Output()
 	if err != nil {
-		log.Fatal("failed to get status: ", err)
+		//log.Fatal("failed to get Big IP Edge Client status: ", err)
+		//log.Info("BIG-IP Client is not alive")
+		return false
 	}
 	if string(pid) == "" {
 		//log.Info("Big-IP Edge Client process not exists")
@@ -72,7 +79,7 @@ func (b *BigIPEdgeClient) killBigIPEdgeClient() {
 	if err != nil {
 		log.Fatal("failed to kill Big IP Edge Client: ", err)
 	}
-	robotgo.Sleep(1)
+	robotgo.MilliSleep(KeyStrokeWaitTime)
 }
 
 func (b *BigIPEdgeClient) loginBigIPEdgeClient() {
@@ -80,17 +87,17 @@ func (b *BigIPEdgeClient) loginBigIPEdgeClient() {
 		log.Error(err)
 	}
 	robotgo.TypeStr(b.Conf.ID)
-	robotgo.Sleep(1)
+	robotgo.MilliSleep(KeyStrokeWaitTime)
 	if err := robotgo.KeyTap("tab"); err != nil {
 		log.Error(err)
 	}
-	robotgo.Sleep(1)
+	robotgo.MilliSleep(KeyStrokeWaitTime)
 	robotgo.TypeStr(b.Conf.PW)
-	robotgo.MilliSleep(300)
+	robotgo.MilliSleep(KeyStrokeWaitTime)
 	if err := robotgo.KeyTap("enter"); err != nil {
 		log.Error(err)
 	}
-	robotgo.MilliSleep(300)
+	robotgo.MilliSleep(KeyStrokeWaitTime)
 	robotgo.TypeStr(b.Conf.PW)
 	if err := robotgo.KeyTap("enter"); err != nil {
 		log.Error(err)

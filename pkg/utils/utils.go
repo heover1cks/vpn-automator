@@ -6,7 +6,7 @@ type TypesForValue interface {
 	string | int | int64 | float32 | float64
 }
 
-//
+// TODO: apply go generic
 //func SortedKeys[K comparable, V TypesForValue](m map[K]V) []K {
 //	keys := make([]K, len(m))
 //	i := 0

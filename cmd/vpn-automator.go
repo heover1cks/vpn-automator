@@ -52,6 +52,6 @@ func main() {
 func init() {
 	log.SetFormatter(&log.TextFormatter{})
 	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 	log.SetReportCaller(os.Getenv("VPN_AUTOMATOR_REPORT_CALLER") == "true")
 }

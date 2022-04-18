@@ -30,7 +30,6 @@ func (w *WireGuardClient) DisconnectWireGuardClientSequence() {
 }
 
 func IsWireguardAlive(service string) bool {
-	println(service)
 	status, err := exec.Command("scutil", "--nc", "status", service).Output()
 	if err != nil {
 		log.Fatal("failed to get wireguard-network status: ", err)
