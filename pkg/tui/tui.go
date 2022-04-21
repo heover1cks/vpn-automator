@@ -106,8 +106,8 @@ func statusColorSelector(status string) string {
 
 func printDescription() string {
 	ret := "\n"
-	ret += fmt.Sprintf(" *[%s]: Process is alive, but not sure which network is connected\n", statusColorFg("UNKN"))
-	ret += fmt.Sprintf(" *[%s]: Connected\n", statusColorFg("CONN"))
-	ret += fmt.Sprintf(" *[%s]: Disconnected or process is dead\n", statusColorFg("DISC"))
+	ret += fmt.Sprintf(" *[%s]: Process is alive, but not sure which network is connected\n", statusColorFg(client.ConnectedUnknown))
+	ret += fmt.Sprintf(" *[%s]: Connected\n", statusColorFg(client.Connected))
+	ret += fmt.Sprintf(" *[%s]: Disconnected or process is dead\n", statusColorFg(client.Disconnected))
 	return ret
 }

@@ -12,7 +12,9 @@ import (
 
 var (
 	// TODO: Let config change this
+	KeyTapWaitTime    = 500
 	KeyStrokeWaitTime = 300
+	LoginFailWaitTime = 500
 )
 
 type BigIPEdgeClient struct {
@@ -83,21 +85,35 @@ func (b *BigIPEdgeClient) killBigIPEdgeClient() {
 }
 
 func (b *BigIPEdgeClient) loginBigIPEdgeClient() {
-	if err := robotgo.KeyTap("tab", "shift"); err != nil {
+	// Move spotlight to ID Field
+	robotgo.MilliSleep(KeyTapWaitTime)
+	if err := robotgo.KeyTap(robotgo.Tab, robotgo.Shift); err != nil {
 		log.Error(err)
 	}
+
+	// Type ID
+	robotgo.MilliSleep(KeyTapWaitTime)
 	robotgo.TypeStr(b.Conf.ID)
-	robotgo.MilliSleep(KeyStrokeWaitTime)
-	if err := robotgo.KeyTap("tab"); err != nil {
+
+	// Move Spotlight to PW Field
+	robotgo.MilliSleep(KeyTapWaitTime)
+	if err := robotgo.KeyTap(robotgo.Tab); err != nil {
 		log.Error(err)
 	}
-	robotgo.MilliSleep(KeyStrokeWaitTime)
+	if err := robotgo.KeyTap(robotgo.Tab); err != nil {
+		log.Error(err)
+	}
+	robotgo.MilliSleep(KeyTapWaitTime)
+
+	// Type PW
 	robotgo.TypeStr(b.Conf.PW)
 	robotgo.MilliSleep(KeyStrokeWaitTime)
-	if err := robotgo.KeyTap("enter"); err != nil {
+	if err := robotgo.KeyTap(robotgo.Enter); err != nil {
 		log.Error(err)
 	}
-	robotgo.MilliSleep(KeyStrokeWaitTime)
+
+	// Wait for login fail and retry
+	robotgo.MilliSleep(LoginFailWaitTime)
 	robotgo.TypeStr(b.Conf.PW)
 	if err := robotgo.KeyTap("enter"); err != nil {
 		log.Error(err)
